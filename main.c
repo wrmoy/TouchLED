@@ -9,4 +9,14 @@
  *
  */
 
-
+// initialize LED, ADC
+// loop over:
+//   set LED to high ("on" duty cycle)
+//   wait for some time, depending on "visible" flag
+//   set LED to low
+//   set LED pin to ADC
+//   pause?
+//   grab an ADC sample
+//   if it's below a certain threshold: (ambient light is bright)
+//      set flag to indicate if LED should be visible
+//   wait for some time ("off" duty cycle)
