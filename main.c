@@ -9,14 +9,44 @@
  *
  */
 
-// initialize LED, ADC
-// loop over:
-//   set LED to high ("on" duty cycle)
-//   wait for some time, depending on "visible" flag
-//   set LED to low
-//   set LED pin to ADC
-//   pause?
-//   grab an ADC sample
-//   if it's below a certain threshold: (ambient light is bright)
-//      set flag to indicate if LED should be visible
-//   wait for some time ("off" duty cycle)
+#include <avr/io.h>
+#include <util/delay.h>
+#include "adc.h"
+#include "common.h"
+
+#define LED_BIT                 1   // port A, pin 13 on attiny84
+#define LIGHT_THRESHOLD         128 // arbitrary value, untested
+
+int main(void) {
+    // LED on or off flag
+    uint8_t isDark = 0;
+
+    /* Initialize LED */
+    bit_set(DDRA, LED_BIT);
+    /* Initialize ADC */
+    adc_init();
+    adc_set_prescaler(ADC_CLK_DIV_2);
+    adc_set_align(ADC_LEFT_ALIGN);
+    adc_select(ADC0_SINGLE);
+
+    while (1) {
+        bit_set(PORTA, LED_BIT);
+        if (isDark)
+            _delay_ms(10);
+        else
+            _delay_ms(200);
+        bit_clear(PORTA, LED_BIT);
+        bit_clear(DDRA, LED_BIT);
+        adc_start();
+        while (adc_is_running())
+            ;
+        if (adc_get_value8() > LIGHT_THRESHOLD)
+            isDark = 1;
+        else
+            isDark = 0;
+        _delay_ms(800);
+    }
+
+    return 0;
+}
+
