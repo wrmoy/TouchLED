@@ -17,7 +17,7 @@
 
 #define LED_TOP                 0   // port A, pin 13 on attiny84
 #define LED_BOTTOM              2   // port A, pin 11 on attiny84
-#define LIGHT_THRESHOLD         128 // arbitrary value, untested
+#define LIGHT_THRESHOLD         0x55 // arbitrary value, untested
 
 int main(void) {
     // LED on or off flag
@@ -40,30 +40,36 @@ int main(void) {
         /* Emit light */
         bit_set(DDRA, LED_TOP); // set as output
         bit_clear(PORTA, LED_TOP);
-        bit_set(PORTA, LED_BOTTOM);
         if (isDark) {
-            _delay_ms(10);
-            bit_clear(PORTA, LED_BOTTOM);
-            _delay_ms(190);
+            bit_set(PORTA, LED_BOTTOM);
         }
         else {
-            _delay_ms(200);
+            bit_clear(PORTA, LED_BOTTOM);
         }
+        _delay_ms(2);
         /* Reverse bias */
         bit_set(PORTA, LED_TOP);
         bit_clear(PORTA, LED_BOTTOM);
+        _delay_ms(1);
         /* Discharge and measure */
+        bit_clear(PORTA, LED_TOP);
         bit_clear(DDRA, LED_TOP); // set as input, change to ADC
-        adc_start();
-        while (adc_is_running())
-            ;
-        uint8_t val = adc_get_value8();
-        if (val > LIGHT_THRESHOLD)
+        uint8_t val = 1;
+        uint16_t cnt = 0;
+        while (val > 0){
+            adc_start();
+            while (adc_is_running())
+                ;
+            val = adc_get_value8();
+            cnt++;
+        }
+        if (cnt > LIGHT_THRESHOLD)
             isDark = 1;
         else
             isDark = 0;
-        suart_xmit(val);
-        _delay_ms(800);
+        // suart_xmit((uint8_t)(cnt>>8));
+        // suart_xmit((uint8_t)(cnt));
+        _delay_ms(8);
     }
 
     return 0;
